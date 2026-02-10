@@ -9,9 +9,6 @@
   "repository": "git://github.com/getsentry/sentry-javascript.git",
   "license": "MIT",
   "author": "Sentry",
-  "imports": {
-    "#src/*": "./src/*"
-  },
   "exports": {
     ".": {
       "types": "./declarations/index.d.ts",
@@ -22,8 +19,7 @@
   "files": [
     "addon-main.cjs",
     "declarations",
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "build": "rollup --config",
