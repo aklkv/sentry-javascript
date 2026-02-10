@@ -2,55 +2,10 @@
  * Performance instrumentation for Ember.js applications.
  *
  * This module provides automatic performance tracking for:
+ *
  * - Page loads and navigation transitions
  * - Ember runloop queues
  * - Component rendering
- *
- * ## Migration from v1 addon
- *
- * In the v1 addon, performance instrumentation was automatic via an instance-initializer
- * that shipped with the addon. In v2, you must create this initializer yourself.
- *
- * ## Setup
- *
- * 1. Create `app/instance-initializers/sentry-performance.ts`:
- *
- * ```typescript
- * import type ApplicationInstance from '@ember/application/instance';
- * import { setupPerformance } from '@sentry/ember/performance';
- *
- * export function initialize(appInstance: ApplicationInstance): void {
- *   setupPerformance(appInstance);
- * }
- *
- * export default {
- *   initialize,
- * };
- * ```
- *
- * 2. Make sure Sentry is initialized in `app/app.ts` before the application starts:
- *
- * ```typescript
- * import Application from '@ember/application';
- * import * as Sentry from '@sentry/ember';
- *
- * Sentry.init({ dsn: 'YOUR_DSN' });
- *
- * export default class App extends Application {
- *   // ...
- * }
- * ```
- *
- * ## Configuration
- *
- * Pass options to `setupPerformance` to customize behavior:
- *
- * ```typescript
- * setupPerformance(appInstance, {
- *   disableRunloopPerformance: true,
- *   minimumComponentRenderDuration: 5,
- * });
- * ```
  */
 
 import { subscribe, unsubscribe } from '@ember/instrumentation';
@@ -607,24 +562,35 @@ function _hasPerformanceSupport(): {
  *
  * This should be called from an instance-initializer after Sentry has been initialized.
  *
- * @param appInstance - The Ember ApplicationInstance
- * @param options - Performance instrumentation options
+ * @param appInstance - The instance of an Ember app
+ *
+ * @param options - Options for performance instrumentation. See https://docs.sentry.io/platforms/javascript/guides/ember/configuration/ember-options/.
  *
  * @example
- * ```typescript
- * // app/instance-initializers/sentry-performance.ts
+ *
+ * ```ts
+ * // app/instance-initializers/sentry.ts
  * import type ApplicationInstance from '@ember/application/instance';
  * import { setupPerformance } from '@sentry/ember/performance';
  *
  * export function initialize(appInstance: ApplicationInstance): void {
- *   setupPerformance(appInstance, {
- *     transitionTimeout: 5000,
- *   });
+ *   setupPerformance(appInstance);
  * }
  *
  * export default {
  *   initialize,
  * };
+ * ```
+ *
+ * @example
+ *
+ * Pass options to customize behavior.
+ *
+ * ```ts
+ * setupPerformance(appInstance, {
+ *   disableRunloopPerformance: true,
+ *   minimumComponentRenderDuration: 5,
+ * });
  * ```
  */
 export function setupPerformance(

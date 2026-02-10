@@ -1,83 +1,8 @@
 /**
  * @sentry/ember - Official Sentry SDK for Ember.js
  *
- * This is a v2 Ember addon that provides Sentry error tracking and performance
- * monitoring for Ember.js applications.
- *
- * ## Migration from v1 to v2 addon format
- *
- * ### 1. Config moved from environment.js to init()
- *
- * Configuration is now passed directly to `init()` instead of `config/environment.js`.
- *
- * ### 2. Initial load scripts must be added manually
- *
- * The v2 addon no longer automatically injects scripts into your HTML.
- * For initial load performance measurement, manually add these scripts to `app/index.html`:
- *
- * ```html
- * <!DOCTYPE html>
- * <html>
- *   <head>
- *     <!-- Add at start of head for accurate initial load measurement -->
- *     <script>if(window.performance&&window.performance.mark){window.performance.mark('@sentry/ember:initial-load-start');}</script>
- *   </head>
- *   <body>
- *     {{content-for "body"}}
- *     <script src="{{rootURL}}assets/vendor.js"></script>
- *     <script src="{{rootURL}}assets/your-app.js"></script>
- *     <!-- Add at end of body for accurate initial load measurement -->
- *     <script>if(window.performance&&window.performance.mark){window.performance.mark('@sentry/ember:initial-load-end');}</script>
- *   </body>
- * </html>
- * ```
- *
- * ### 3. Performance instrumentation requires manual setup
- *
- * In v1, performance was automatically instrumented via a built-in instance-initializer.
- * In v2, create your own `app/instance-initializers/sentry-performance.ts`:
- *
- * ```typescript
- * import type ApplicationInstance from '@ember/application/instance';
- * import { setupPerformance } from '@sentry/ember/performance';
- *
- * export function initialize(appInstance: ApplicationInstance): void {
- *   setupPerformance(appInstance);
- * }
- *
- * export default { initialize };
- * ```
- *
- * ## Basic Usage
- *
- * ```typescript
- * // In your app/app.ts or app/app.js
- * import Application from '@ember/application';
- * import * as Sentry from '@sentry/ember';
- *
- * Sentry.init({
- *   dsn: 'YOUR_DSN_HERE',
- *   // ...other options
- * });
- *
- * export default class App extends Application {
- *   // ...
- * }
- * ```
- *
- * ## Route Performance Instrumentation
- *
- * ```typescript
- * // In your route file
- * import Route from '@ember/routing/route';
- * import { instrumentRoutePerformance } from '@sentry/ember';
- *
- * class MyRoute extends Route {
- *   // ...
- * }
- *
- * export default instrumentRoutePerformance(MyRoute);
- * ```
+ * A v2 addon that provides Sentry's error tracking and performance monitoring
+ * for Ember apps.
  */
 
 import { startSpan } from '@sentry/browser';
