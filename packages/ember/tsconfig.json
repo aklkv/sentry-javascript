@@ -1,15 +1,10 @@
-/**
- * This tsconfig is not used for publishing.
- * It's only for the local editing experience
- * (and linting)
- */
 {
   "extends": "@ember/app-tsconfig",
   "include": [
+    "demo-app/**/*",
     "src/**/*",
     "tests/**/*",
-    "unpublished-development-types/**/*",
-    "demo-app/**/*"
+    "unpublished-development-types/**/*"
   ],
   "compilerOptions": {
     "rootDir": ".",
