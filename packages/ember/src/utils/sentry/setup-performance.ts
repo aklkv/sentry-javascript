@@ -7,39 +7,29 @@
  * - Ember runloop queues
  * - Component rendering
  */
-
+import type ApplicationInstance from '@ember/application/instance';
+import type RouterService from '@ember/routing/router-service';
 import { subscribe, unsubscribe } from '@ember/instrumentation';
 import { _backburner, run, scheduleOnce } from '@ember/runloop';
 import {
+  type BrowserClient,
   browserTracingIntegration,
   getActiveSpan,
   getClient,
-  startBrowserTracingNavigationSpan,
-  startBrowserTracingPageLoadSpan,
   SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN,
   SEMANTIC_ATTRIBUTE_SENTRY_SOURCE,
+  startBrowserTracingNavigationSpan,
+  startBrowserTracingPageLoadSpan,
   startInactiveSpan,
 } from '@sentry/browser';
 import {
   addIntegration,
   browserPerformanceTimeOrigin,
+  type Span,
   timestampInSeconds,
 } from '@sentry/core';
 
-import type ApplicationInstance from '@ember/application/instance';
-import type RouterService from '@ember/routing/router-service';
-import type { BrowserClient } from '@sentry/browser';
-import type { Span } from '@sentry/core';
-
-// This is private in Ember and not really exported, so we "mock" these types here.
-export interface EmberRouterMain {
-  location: {
-    getURL?: () => string;
-    formatURL?: (url: string) => string;
-    implementation?: string;
-    rootURL: string;
-  };
-}
+import type { EmberRouterMain } from '../../types.ts';
 
 // Module-level flag to prevent duplicate global listeners (runloop, components)
 // from accumulating across repeated setupPerformance calls (e.g., in tests or ember-engines).
@@ -64,12 +54,12 @@ export function _resetGlobalInstrumentation(): void {
 
 // Ember runloop queue names
 type EmberRunQueues =
-  | 'sync'
   | 'actions'
-  | 'routerTransitions'
-  | 'render'
   | 'afterRender'
-  | 'destroy';
+  | 'destroy'
+  | 'render'
+  | 'routerTransitions'
+  | 'sync';
 
 /**
  * Extended Backburner interface with the 'off' method that's not in the public types.
@@ -79,7 +69,24 @@ interface ExtendedBackburner {
   off(eventName: string, callback: (...args: unknown[]) => void): void;
 }
 
-export interface PerformanceOptions {
+interface PerformanceOptions {
+  /**
+   * Options to pass to browserTracingIntegration.
+   */
+  browserTracingOptions?: Parameters<typeof browserTracingIntegration>[0];
+
+  /**
+   * Whether to disable initial page load instrumentation.
+   * @default false
+   */
+  disableInitialLoadInstrumentation?: boolean;
+
+  /**
+   * Whether to disable component render tracking.
+   * @default false
+   */
+  disableInstrumentComponents?: boolean;
+
   /**
    * Whether to disable all performance instrumentation.
    * @default false
@@ -93,28 +100,10 @@ export interface PerformanceOptions {
   disableRunloopPerformance?: boolean;
 
   /**
-   * Whether to disable component render tracking.
-   * @default false
-   */
-  disableInstrumentComponents?: boolean;
-
-  /**
-   * Whether to disable initial page load instrumentation.
-   * @default false
-   */
-  disableInitialLoadInstrumentation?: boolean;
-
-  /**
    * Whether to enable component definition tracking.
    * @default false
    */
   enableComponentDefinitions?: boolean;
-
-  /**
-   * Minimum duration (ms) for runloop queue spans to be recorded.
-   * @default 5
-   */
-  minimumRunloopQueueDuration?: number;
 
   /**
    * Minimum duration (ms) for component render spans to be recorded.
@@ -123,15 +112,16 @@ export interface PerformanceOptions {
   minimumComponentRenderDuration?: number;
 
   /**
+   * Minimum duration (ms) for runloop queue spans to be recorded.
+   * @default 5
+   */
+  minimumRunloopQueueDuration?: number;
+
+  /**
    * Timeout (ms) for navigation transitions.
    * @default 5000
    */
   transitionTimeout?: number;
-
-  /**
-   * Options to pass to browserTracingIntegration.
-   */
-  browserTracingOptions?: Parameters<typeof browserTracingIntegration>[0];
 }
 
 function getBackburner(): Pick<ExtendedBackburner, 'on' | 'off'> {
@@ -571,7 +561,7 @@ function _hasPerformanceSupport(): {
  * ```ts
  * // app/instance-initializers/sentry.ts
  * import type ApplicationInstance from '@ember/application/instance';
- * import { setupPerformance } from '@sentry/ember/performance';
+ * import { setupPerformance } from '@sentry/ember';
  *
  * export function initialize(appInstance: ApplicationInstance): void {
  *   setupPerformance(appInstance);
