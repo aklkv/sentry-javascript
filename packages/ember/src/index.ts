@@ -6,7 +6,7 @@ export * from '@sentry/browser';
  * A v2 addon that provides Sentry's error tracking and performance monitoring
  * for Ember apps.
  */
-export type { EmberSentryConfig, EmberRouterMain } from './types.ts';
+export type { EmberSentryConfig } from './types.ts';
 export {
   INITIAL_LOAD_BODY_SCRIPT,
   INITIAL_LOAD_BODY_SCRIPT_HASH,

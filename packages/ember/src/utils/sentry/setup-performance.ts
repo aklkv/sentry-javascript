@@ -29,7 +29,12 @@ import {
   timestampInSeconds,
 } from '@sentry/core';
 
-import type { EmberRouterMain } from '../../types.ts';
+import {
+  type EmberRouterMain,
+  getLocationURL,
+  getTransitionInformation,
+  isTransitionIntermediate,
+} from '../ember/router.ts';
 
 // Module-level flag to prevent duplicate global listeners (runloop, components)
 // from accumulating across repeated setupPerformance calls (e.g., in tests or ember-engines).
@@ -148,38 +153,6 @@ function getBackburner(): Pick<ExtendedBackburner, 'on' | 'off'> {
   };
 }
 
-function getTransitionInformation(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transition: any,
-  router: RouterService,
-): { fromRoute?: string; toRoute?: string } {
-  const fromRoute = transition?.from?.name as string | undefined;
-  const toRoute =
-    (transition?.to?.name as string | undefined) ||
-    router.currentRouteName ||
-    undefined;
-  return {
-    fromRoute,
-    toRoute,
-  };
-}
-
-/**
- * Get the current URL from the Ember router location.
- */
-export function _getLocationURL(location: EmberRouterMain['location']): string {
-  if (!location?.getURL || !location?.formatURL) {
-    return '';
-  }
-  const url = location.formatURL(location.getURL());
-
-  // `implementation` is optional in Ember's predefined location types, so we also check if the URL starts with '#'.
-  if (location.implementation === 'hash' || url.startsWith('#')) {
-    return `${location.rootURL}${url}`;
-  }
-  return url;
-}
-
 function _instrumentEmberRouter(
   routerService: RouterService,
   routerMain: EmberRouterMain,
@@ -190,7 +163,7 @@ function _instrumentEmberRouter(
   let activeRootSpan: Span | undefined;
   let transitionSpan: Span | undefined;
 
-  const url = _getLocationURL(location);
+  const url = getLocationURL(location);
 
   const client = getClient<BrowserClient>();
 
@@ -242,7 +215,7 @@ function _instrumentEmberRouter(
     );
 
     // We want to ignore loading && error routes
-    if (transitionIsIntermediate(transition)) {
+    if (isTransitionIntermediate(transition)) {
       return;
     }
 
@@ -273,7 +246,7 @@ function _instrumentEmberRouter(
     if (
       !transitionSpan ||
       !activeRootSpan ||
-      transitionIsIntermediate(transition)
+      isTransitionIntermediate(transition)
     ) {
       return;
     }
@@ -642,25 +615,4 @@ export function setupPerformance(
 
   routerService._hasMountedSentryPerformanceRouting = true;
   _instrumentEmberRouter(routerService, routerMain, options);
-}
-
-function transitionIsIntermediate(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transition: any,
-): boolean {
-  // We want to use ignore, as this may actually be defined on new versions
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore This actually exists on newer versions
-  const isIntermediate: boolean | undefined = transition.isIntermediate;
-
-  if (typeof isIntermediate === 'boolean') {
-    return isIntermediate;
-  }
-
-  // For versions without this, we look if the route is a `.loading` or `.error` route
-  // This is not perfect and may false-positive in some cases, but it's the best we can do
-  return (
-    transition.to?.localName === 'loading' ||
-    transition.to?.localName === 'error'
-  );
 }
