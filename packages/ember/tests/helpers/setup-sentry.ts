@@ -1,8 +1,5 @@
 import { getContext, resetOnerror, setupOnerror } from '@ember/test-helpers';
-import {
-  setupPerformance,
-  _resetGlobalInstrumentation,
-} from '@sentry/ember/performance';
+import { setupPerformance } from '@sentry/ember';
 import sinon from 'sinon';
 
 import type { TestContext } from '@ember/test-helpers';
@@ -17,13 +14,13 @@ export type SentryTestContext = TestContext & {
 };
 
 export function setupSentryTest(hooks: NestedHooks): void {
-  hooks.beforeEach(function (this: SentryTestContext) {
+  hooks.beforeEach(async function (this: SentryTestContext) {
     window._sentryTestEvents = [];
 
     // Set up performance instrumentation using the test app instance
     const context = getContext() as { owner?: ApplicationInstance } | undefined;
     if (context?.owner) {
-      setupPerformance(context.owner, {
+      await setupPerformance(context.owner, {
         transitionTimeout: 5000,
         minimumRunloopQueueDuration: 5,
         minimumComponentRenderDuration: 0,
@@ -71,7 +68,6 @@ export function setupSentryTest(hooks: NestedHooks): void {
   });
 
   hooks.afterEach(function (this: SentryTestContext) {
-    _resetGlobalInstrumentation();
     this.fetchStub.restore();
     this.qunitOnUnhandledRejection.restore();
     window.onerror = this._windowOnError;
